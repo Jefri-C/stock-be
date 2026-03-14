@@ -1,25 +1,12 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import yfinance as yf
-import requests
 
 app = Flask(__name__)
 CORS(app)
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.5",
-}
-
-def make_session():
-    s = requests.Session()
-    s.headers.update(HEADERS)
-    return s
-
 def get_fundamentals(ticker):
-    session = make_session()
-    stock = yf.Ticker(ticker, session=session)
+    stock = yf.Ticker(ticker)
     info = stock.info
 
     if not info or (info.get("regularMarketPrice") is None and info.get("currentPrice") is None):
@@ -117,6 +104,7 @@ def get_fundamentals(ticker):
             clean[k] = None
     return clean
 
+
 @app.route("/fundamentals")
 def fundamentals():
     tickers_param = request.args.get("tickers", "")
@@ -131,8 +119,10 @@ def fundamentals():
             results[ticker] = {"error": str(e)}
     return jsonify(results)
 
+
 @app.route("/")
 def health():
     return jsonify({"status": "ok", "usage": "/fundamentals?tickers=AAPL"})
+
 
 app.run(host="0.0.0.0", port=8080)
